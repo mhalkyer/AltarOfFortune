@@ -22,6 +22,10 @@ public class SessionDetails : MonoBehaviour
     private string scoreTextPrefix  = "Score: ";
     private string bannerTextPrefix = "Next frame index: ";
 
+    public bool LockCameraToActiveRow = true;
+    private float newCameraY = 6.41f;
+    private float cameraPosStep = 0.1f;
+
     // Use this for initialization
     void Start ()
     {
@@ -57,21 +61,28 @@ public class SessionDetails : MonoBehaviour
         Camera cam = cameras[0];
         float x = cam.transform.position.x;
         float z = cam.transform.position.z;
-        float newY = 6.41f;
 
         switch (Row)
         {
-            case 1:  newY = 6.41f;  break;
-            case 2:  newY = 6.41f;  break;
-            case 3:  newY = 1.6f;   break;
-            case 4:  newY = -6.17f; break;
-            case 5:  newY = -9.11f; break;
-            default: newY = 6.41f;  break;
+            case 1:  newCameraY = 6.41f;  break;
+            case 2:  newCameraY = 6.41f;  break;
+            case 3:  newCameraY = 1.6f;   break;
+            case 4:  newCameraY = -6.17f; break;
+            case 5:  newCameraY = -9.11f; break;
+            default: newCameraY = 6.41f;  break;
         }
 
-        Vector3 newPos = new Vector3(x, newY, z);
-        if (cam.transform.position != newPos)
-            cam.transform.position = newPos;
+        //Move the camera towards the new Y position
+        float moveY = cam.transform.position.y < newCameraY ? cameraPosStep : -cameraPosStep;
+        Vector3 newPos = new Vector3(x, newCameraY, z);
+
+        //Check if camera's Y position is within 1 'step' of Y distance
+        if (Mathf.Abs(cam.transform.position.y - newPos.y) >= cameraPosStep)
+        {
+            cam.transform.position = new Vector3(cam.transform.position.x,
+                                                 cam.transform.position.y + moveY,
+                                                 cam.transform.position.z);
+        }
         
         //Update row text
         if (rowText.text != rowTextPrefix + Row)

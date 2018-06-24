@@ -10,7 +10,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <RootNamespace>
     </RootNamespace>
-    <ProjectGuid>{42545DE0-9E63-D648-A9EB-8FC520D706AF}</ProjectGuid>
+    <ProjectGuid>{55823978-47F8-93CF-5F12-42D4873CD8CE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AssemblyName>Assembly-CSharp</AssemblyName>
@@ -68,11 +68,12 @@
     <Compile Include="Assets\Scripts\Spinner.cs" />
     <None Include="Assets\Sfx\Casino Sound Package\readme.txt" />
     <None Include="Assets\Sources.txt" />
+    <None Include="Assets\Images\medieval signs\readme.txt" />
     <Reference Include="UnityEditor.StandardEvents">
-      <HintPath>C:/Users/mhalkyer/Documents/GitHub/The Alter of Fortune/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
+      <HintPath>C:/Users/mhalkyer/Documents/GitHub/AltarOfFortune/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PackageManagerUI.Editor">
-      <HintPath>C:/Users/mhalkyer/Documents/GitHub/The Alter of Fortune/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
+      <HintPath>C:/Users/mhalkyer/Documents/GitHub/AltarOfFortune/Library/ScriptAssemblies/Unity.PackageManagerUI.Editor.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AIModule">
       <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>

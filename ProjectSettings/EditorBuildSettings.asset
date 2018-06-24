@@ -5,9 +5,16 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
+  - enabled: 1
     path: Assets/Scenes/allCards.unity
+    guid: 24a0c52fef5f5ed45871ce8cb1c43d07
   - enabled: 1
     path: Assets/Scenes/menuMain.unity
-  - enabled: 1
+    guid: 2a2f34cc032549e4b9650e197f779b56
+  - enabled: 0
     path: Assets/Scenes/testLevel1.unity
+    guid: c361bc53b21de5943bd34632810a8bf6
+  - enabled: 1
+    path: Assets/Scenes/standardTowerLevel.unity
+    guid: 60864cdb1b9b50441a0d3575d6d1d0b2
+  m_configObjects: {}

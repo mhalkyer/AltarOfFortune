@@ -13,19 +13,36 @@ public class DeckBehavior : MonoBehaviour
     public enum DrawMethod { replaceTargetSprite, CreateNewCardAtTarget };
     public DrawMethod selectedDrawMethod = DrawMethod.CreateNewCardAtTarget;
 
-    private DateTime timeOfLastDraw = DateTime.Now;
+    private DateTime timeOfLastAction = DateTime.Now;
     private string NL = "\r\n";
+
+    public GameObject particleObject;
+    public bool PlayParticleOnDraw = true;
+
+    public bool ResetOnLastFrame = true;
+    public GameObject LastFrame;
+
+    public AudioClip ShuffleSoundEffect;
 
     // Use this for initialization
     void Start()
     {
+        if (LastFrame == null)
+            print("No LastFrame defined for when a 'draw' click occurs!" + NL);
+
+        if (ShuffleSoundEffect == null)
+            print("No ShuffleSoundEffect defined for reshuffling!" + NL);
+
         if (targetsToDrawCardOn == null)
             print("No targets for when a 'draw' click occurs!" + NL);
 
         if (collectionToDrawFrom.Count == 0)
             print("No source Card GameObject collection defined to randomly 'draw' from!" + NL);
 
-        timeOfLastDraw = DateTime.Now;
+        if (particleObject == null && PlayParticleOnDraw)
+            print("No particles for when a 'draw' occurs!" + NL);
+
+        timeOfLastAction = DateTime.Now;
     }
 
     // Update is called once per frame
@@ -41,7 +58,7 @@ public class DeckBehavior : MonoBehaviour
     {
         get
         {
-            return DateTime.Now < timeOfLastDraw.AddMilliseconds(sleepBetweenDraws);
+            return DateTime.Now < timeOfLastAction.AddMilliseconds(sleepBetweenDraws);
         }
     }
     
@@ -50,25 +67,28 @@ public class DeckBehavior : MonoBehaviour
         try
         {
             //Draw a card if not resting  
-            if (!isResting && targetsToDrawCardOn.Count > (nextFrameIndex-1))
+            if (!isResting && targetsToDrawCardOn.Count > (nextFrameIndex-1) && collectionToDrawFrom.Count > 0)
             {
                 GameObject targetCard = targetsToDrawCardOn[nextFrameIndex];
 
-                if (targetCard && collectionToDrawFrom.Count > 0)
+                if (targetCard && targetCard != LastFrame)
                 {
                     DrawCard(targetCard);
-
-                    //Play Sfx
-                    SfxPlayer player = GetComponent<SfxPlayer>();
-                    if (player != null)
-                    {
-                        player.SelectNewClip();
-                        player.GetComponent<AudioSource>().Play();
-                    }
+                    PlayDrawEffects(targetCard);
                 }
+                else if (targetCard == LastFrame && ResetOnLastFrame)
+                {
+                    ResetAndReshuffle();
+                }
+                timeOfLastAction = DateTime.Now;
+
+                if (nextFrameIndex + 1 > targetsToDrawCardOn.Count - 1)
+                    nextFrameIndex = 0;
+                else
+                    nextFrameIndex++;
             }
         }
-        catch (Exception error)
+        catch(Exception error)
         {
             string msg = string.Empty;
 
@@ -79,6 +99,47 @@ public class DeckBehavior : MonoBehaviour
                 msg += error.InnerException.Message;
 
             print(msg + NL);
+        }
+    }
+
+    private void PlayDrawEffects(GameObject targetCard)
+    {
+        //Play Sfx
+        SfxPlayer player = GetComponent<SfxPlayer>();
+        if (player != null)
+        {
+            player.SelectNewClip();
+            player.GetComponent<AudioSource>().Play();
+        }
+
+        //Move and play particle effect
+        if (PlayParticleOnDraw)
+        {
+            particleObject.transform.position = targetCard.transform.position;
+            particleObject.GetComponent<ParticleSystem>().Play();
+        }
+    }
+
+    private void ResetAndReshuffle()
+    {
+        //Remove all card game objects
+        GameObject[] gObjs = FindObjectsOfType<GameObject>();
+        foreach(GameObject g in gObjs)
+        {
+            if (g.name.Contains("Clubs")    ||
+                g.name.Contains("Spades")   ||
+                g.name.Contains("Hearts")   ||
+                g.name.Contains("Diamonds") ||
+                g.name.Contains("Joker"))
+                Destroy(g);
+        }
+        
+        //Play shuffle sfx
+        if(ShuffleSoundEffect != null)
+        {
+            AudioSource aSource = gameObject.GetComponent<AudioSource>(); 
+            aSource.clip = ShuffleSoundEffect;
+            aSource.Play();
         }
     }
 
@@ -93,12 +154,12 @@ public class DeckBehavior : MonoBehaviour
         //"Draw" a random card
         if (selectedDrawMethod == DrawMethod.replaceTargetSprite)
         {
-            print("Changing " + targetCard.name + " to " + randomCard.name + NL);
+            //print("Changing " + targetCard.name + " to " + randomCard.name + NL);
             CopyCard(randomCard, targetCard);
         }
         else if (selectedDrawMethod == DrawMethod.CreateNewCardAtTarget)
         {
-            print("Created " + randomCard.name + " at " + targetCard.transform.position + NL);
+            //print("Created " + randomCard.name + " at " + targetCard.transform.position + NL);
             GameObject newCard = Instantiate(randomCard, targetCard.transform.position, new Quaternion());
 
             //Set sorting layer so newest drawn card is topmost
@@ -110,14 +171,6 @@ public class DeckBehavior : MonoBehaviour
                 newCard.GetComponent<DragToMove>().enabled = false;
         }
         SessionDetails.TotalDrawnCards++;
-
-        //Go to the next target or reset the counter
-        if (nextFrameIndex >= (targetsToDrawCardOn.Count - 1))
-            nextFrameIndex = 0;
-        else
-            nextFrameIndex++;
-
-        timeOfLastDraw = DateTime.Now;
     }
 
     void CopyCard(GameObject sourceGameObject, GameObject targetGameObject)

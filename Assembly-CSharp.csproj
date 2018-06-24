@@ -68,7 +68,7 @@
     <Compile Include="Assets\Scripts\Spinner.cs" />
     <None Include="Assets\Sfx\Casino Sound Package\readme.txt" />
     <None Include="Assets\Sources.txt" />
-    <None Include="Assets\Images\medieval signs\readme.txt" />
+    <None Include="Assets\Images\Medieval Signs\readme.txt" />
     <Reference Include="UnityEditor.StandardEvents">
       <HintPath>C:/Users/mhalkyer/Documents/GitHub/AltarOfFortune/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
     </Reference>

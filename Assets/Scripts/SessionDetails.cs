@@ -73,12 +73,12 @@ public class SessionDetails : MonoBehaviour
         }
 
         //Move the camera towards the new Y position
-        float moveY = cam.transform.position.y < newCameraY ? cameraPosStep : -cameraPosStep;
         Vector3 newPos = new Vector3(x, newCameraY, z);
 
-        //Check if camera's Y position is within 1 'step' of Y distance
+        //Check if camera's Y position is within 1 'step' of the target Y position
         if (Mathf.Abs(cam.transform.position.y - newPos.y) >= cameraPosStep)
         {
+            float moveY = cam.transform.position.y < newCameraY ? cameraPosStep : -cameraPosStep;
             cam.transform.position = new Vector3(cam.transform.position.x,
                                                  cam.transform.position.y + moveY,
                                                  cam.transform.position.z);

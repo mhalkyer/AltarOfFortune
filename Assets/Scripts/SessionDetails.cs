@@ -24,7 +24,7 @@ public class SessionDetails : MonoBehaviour
 
     public bool LockCameraToActiveRow = true;
     private float newCameraY = 6.41f;
-    private float cameraPosStep = 0.1f;
+    private float cameraPosStep = 0.2f;
 
     // Use this for initialization
     void Start ()

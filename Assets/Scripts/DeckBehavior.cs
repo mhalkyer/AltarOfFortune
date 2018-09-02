@@ -11,7 +11,7 @@ public class DeckBehavior : MonoBehaviour
     public int sleepBetweenDraws = 500;
 
     public enum DrawMethod { replaceTargetSprite, CreateNewCardAtTarget };
-    public DrawMethod selectedDrawMethod = DrawMethod.CreateNewCardAtTarget;
+    public DrawMethod myDrawMethod = DrawMethod.CreateNewCardAtTarget;
 
     private DateTime timeOfLastAction = DateTime.Now;
     private string NL = "\r\n";
@@ -19,8 +19,8 @@ public class DeckBehavior : MonoBehaviour
     public GameObject particleObject;
     public bool PlayParticleOnDraw = true;
 
-    public bool ResetOnLastFrame = true;
     public GameObject LastFrame;
+    public bool ResetOnLastFrame = true;
 
     public AudioClip ShuffleSoundEffect;
 
@@ -75,11 +75,13 @@ public class DeckBehavior : MonoBehaviour
                 {
                     DrawCard(targetCard);
                     PlayDrawEffects(targetCard);
+                    SendMessageUpwards("CheckTheRules");
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
                 {
                     ResetAndReshuffle();
                 }
+
                 timeOfLastAction = DateTime.Now;
 
                 if (nextFrameIndex + 1 > targetsToDrawCardOn.Count - 1)
@@ -152,12 +154,12 @@ public class DeckBehavior : MonoBehaviour
         //print("Random index: " + randomIndex + NL + "Random card: " + randomCard.name + NL);
 
         //"Draw" a random card
-        if (selectedDrawMethod == DrawMethod.replaceTargetSprite)
+        if (myDrawMethod == DrawMethod.replaceTargetSprite)
         {
             //print("Changing " + targetCard.name + " to " + randomCard.name + NL);
             CopyCard(randomCard, targetCard);
         }
-        else if (selectedDrawMethod == DrawMethod.CreateNewCardAtTarget)
+        else if (myDrawMethod == DrawMethod.CreateNewCardAtTarget)
         {
             //print("Created " + randomCard.name + " at " + targetCard.transform.position + NL);
             GameObject newCard = Instantiate(randomCard, targetCard.transform.position, new Quaternion());
@@ -169,6 +171,9 @@ public class DeckBehavior : MonoBehaviour
             //Disable the "dragToMove" script
             if(newCard.GetComponent<DragToMove>())
                 newCard.GetComponent<DragToMove>().enabled = false;
+
+            //Update current card
+            SessionDetails.CurrentCard = newCard;
         }
         SessionDetails.TotalDrawnCards++;
     }

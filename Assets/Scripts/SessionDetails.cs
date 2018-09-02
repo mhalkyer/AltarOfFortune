@@ -13,7 +13,10 @@ public class SessionDetails : MonoBehaviour
     public DeckBehavior Deck;
 
     public List<GameObject> Hearts = new List<GameObject>() { };
-    
+
+    public GameObject ObjToAnimate;
+    public static GameObject CurrentCard;
+
     public Text rowText = null; 
     public Text scoreText = null;
     public Text bannerText = null;
@@ -84,7 +87,12 @@ public class SessionDetails : MonoBehaviour
                                                  cam.transform.position.y + moveY,
                                                  cam.transform.position.z);
         }
-        
+
+        //Move the animating obj to the right Y
+        ObjToAnimate.transform.position = new Vector3(ObjToAnimate.transform.position.x,
+                                                      newCameraY,
+                                                      ObjToAnimate.transform.position.z);
+
         //Update row text
         if (rowText.text != rowTextPrefix + Row)
             rowText.text  = rowTextPrefix + Row;
@@ -97,4 +105,15 @@ public class SessionDetails : MonoBehaviour
         if (bannerText.text != bannerTextPrefix + Deck.nextFrameIndex)
             bannerText.text  = bannerTextPrefix + Deck.nextFrameIndex;
     }
+
+    // Check the state of all cards and trigger any needed events
+    public void CheckTheRules()
+    {
+        //if (CurrentCard.name.ToLower().Contains("king"))
+            ObjToAnimate.GetComponent<Animator>().Play("axeFlyIn");
+
+        return;
+    }
+
+
 }

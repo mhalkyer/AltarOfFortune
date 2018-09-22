@@ -14,35 +14,40 @@ public class SessionDetails : MonoBehaviour
 
     public List<GameObject> Hearts = new List<GameObject>() { };
 
-    public GameObject ObjToAnimate;
+    public GameObject particleObject;
+    public GameObject deathAxeEffect;
     public static GameObject CurrentCard;
 
-    public Text rowText = null; 
-    public Text scoreText = null;
-    public Text bannerText = null;
+    public Text rowText = null,
+                scoreText = null,
+                bannerText = null;
 
-    private string rowTextPrefix    = "Row: ";
-    private string scoreTextPrefix  = "Score: ";
-    private string bannerTextPrefix = "Next frame index: ";
+    private readonly string rowTextPrefix    = "Row: ",
+                            scoreTextPrefix  = "Score: ",
+                            bannerTextPrefix = "Next frame index: ",
+                            NL               = "\r\n";
 
     public bool LockCameraToActiveRow = true;
-    private float newCameraY = 6.41f;
-    private float cameraPosStep = 0.2f;
+    private float newCameraY = 6.41f,
+                  cameraPosStep = 0.2f;
 
     // Use this for initialization
     void Start ()
     {
         if (Hearts.Count == 0)
-            print("SessionDetails has no hearts game objs set! \r\n");
+            print("SessionDetails has no hearts game objs set!" + NL);
 
         if (rowText == null)
-            print("UI rowText has no text to set! \r\n");
+            print("UI rowText has no text to set!" + NL);
 
         if (scoreText == null)
-            print("UI scoreText has no text to set! \r\n");
+            print("UI scoreText has no text to set!" + NL);
 
         if (bannerText == null)
-            print("UI bannerText has no text to set! \r\n");
+            print("UI bannerText has no text to set!" + NL);
+
+        if (particleObject == null)
+            print("No particle effect defined!" + NL);
     }
 	
 	// Update is called once per frame
@@ -51,12 +56,12 @@ public class SessionDetails : MonoBehaviour
         //Update the row based on the next draw target
         int nextIndex = Deck.nextFrameIndex;
                         
-        if      ( nextIndex <= 1)  { Row = 1; }  //Zero *shouldn't* happen
-        else if ( nextIndex <= 3)  { Row = 2; }
-        else if ( nextIndex <= 6)  { Row = 3; }
-        else if ( nextIndex <= 10) { Row = 4; }
-        else if ( nextIndex <= 15) { Row = 5; }
-        else                       { Row = 1; }  //This also *shouldn't* happen
+        if      ( nextIndex <= 1  ) { Row = 1; }  //Zero *shouldn't* happen
+        else if ( nextIndex <= 3  ) { Row = 2; }
+        else if ( nextIndex <= 6  ) { Row = 3; }
+        else if ( nextIndex <= 10 ) { Row = 4; }
+        else if ( nextIndex <= 15 ) { Row = 5; }
+        else                        { Row = 1; }  //This also *shouldn't* happen
 
         //Move the camera based on the row
         Camera[] cameras = new Camera[1];
@@ -88,11 +93,6 @@ public class SessionDetails : MonoBehaviour
                                                  cam.transform.position.z);
         }
 
-        //Move the animating obj to the right Y
-        ObjToAnimate.transform.position = new Vector3(ObjToAnimate.transform.position.x,
-                                                      newCameraY,
-                                                      ObjToAnimate.transform.position.z);
-
         //Update row text
         if (rowText.text != rowTextPrefix + Row)
             rowText.text  = rowTextPrefix + Row;
@@ -109,10 +109,43 @@ public class SessionDetails : MonoBehaviour
     // Check the state of all cards and trigger any needed events
     public void CheckTheRules()
     {
-        //if (CurrentCard.name.ToLower().Contains("king"))
-            ObjToAnimate.GetComponent<Animator>().Play("axeFlyIn");
+        if (CurrentCard.name.ToLower().Contains("king" ) ||
+            CurrentCard.name.ToLower().Contains("queen") ||
+            CurrentCard.name.ToLower().Contains("jack" ) )
+        {
+            Vector3 newPos = new Vector3(CurrentCard.transform.position.x - 0.7f,  //Animation start is off-screen from target
+                                         CurrentCard.transform.position.y - 12.0f,  
+                                         deathAxeEffect.transform.position.z);
+
+            GameObject newDeathAxeEffect = Instantiate(deathAxeEffect, newPos, new Quaternion());
+
+            //Move death axe *parent* to target card
+            newDeathAxeEffect.transform.position = newPos;
+
+            //Animate death axe!
+            newDeathAxeEffect.GetComponentInChildren<Animator>().Play("axeFlyIn", -1, 0f);     //Using the extra 2 parameters helps it reset (?)
+
+            //Subtract from score
+            int axeScoreDamage = 300;
+            if (Score >= axeScoreDamage)
+                Score -= axeScoreDamage;
+            else
+                Score = 0;
+        }
+        else
+        {
+            Score += 100;
+            PlayParticleEffect(CurrentCard);
+        }
 
         return;
+    }
+
+    private void PlayParticleEffect(GameObject targetCard)
+    {
+        //Move and play particle effect
+        particleObject.transform.position = targetCard.transform.position;
+        particleObject.GetComponent<ParticleSystem>().Play();
     }
 
 

@@ -16,9 +16,6 @@ public class DeckBehavior : MonoBehaviour
     private DateTime timeOfLastAction = DateTime.Now;
     private string NL = "\r\n";
 
-    public GameObject particleObject;
-    public bool PlayParticleOnDraw = true;
-
     public GameObject LastFrame;
     public bool ResetOnLastFrame = true;
 
@@ -38,9 +35,6 @@ public class DeckBehavior : MonoBehaviour
 
         if (collectionToDrawFrom.Count == 0)
             print("No source Card GameObject collection defined to randomly 'draw' from!" + NL);
-
-        if (particleObject == null && PlayParticleOnDraw)
-            print("No particles for when a 'draw' occurs!" + NL);
 
         timeOfLastAction = DateTime.Now;
     }
@@ -74,7 +68,6 @@ public class DeckBehavior : MonoBehaviour
                 if (targetCard && targetCard != LastFrame)
                 {
                     DrawCard(targetCard);
-                    PlayDrawEffects(targetCard);
                     SendMessageUpwards("CheckTheRules");
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
@@ -104,35 +97,18 @@ public class DeckBehavior : MonoBehaviour
         }
     }
 
-    private void PlayDrawEffects(GameObject targetCard)
-    {
-        //Play Sfx
-        SfxPlayer player = GetComponent<SfxPlayer>();
-        if (player != null)
-        {
-            player.SelectNewClip();
-            player.GetComponent<AudioSource>().Play();
-        }
-
-        //Move and play particle effect
-        if (PlayParticleOnDraw)
-        {
-            particleObject.transform.position = targetCard.transform.position;
-            particleObject.GetComponent<ParticleSystem>().Play();
-        }
-    }
-
     private void ResetAndReshuffle()
     {
         //Remove all card game objects
         GameObject[] gObjs = FindObjectsOfType<GameObject>();
         foreach(GameObject g in gObjs)
         {
-            if (g.name.Contains("Clubs")    ||
-                g.name.Contains("Spades")   ||
-                g.name.Contains("Hearts")   ||
-                g.name.Contains("Diamonds") ||
-                g.name.Contains("Joker"))
+            if (g.name.Contains("Clubs")            ||
+                g.name.Contains("Spades")           ||
+                g.name.Contains("Hearts")           ||
+                g.name.Contains("Diamonds")         ||
+                g.name.Contains("Joker")            ||
+                g.name.Contains("deathAxeEffect"))
                 Destroy(g);
         }
         
@@ -145,23 +121,25 @@ public class DeckBehavior : MonoBehaviour
         }
     }
 
+    bool drawCardVerboseLogging = false;
     private void DrawCard(GameObject targetCard)
     {
         //Select a random card from those in the collection
         System.Random randomInt = new System.Random();
         int randomIndex = randomInt.Next(collectionToDrawFrom.Count - 1);
         GameObject randomCard = collectionToDrawFrom[randomIndex];
-        //print("Random index: " + randomIndex + NL + "Random card: " + randomCard.name + NL);
+
+        Log("Random index: " + randomIndex + NL + "Random card: " + randomCard.name);
 
         //"Draw" a random card
         if (myDrawMethod == DrawMethod.replaceTargetSprite)
         {
-            //print("Changing " + targetCard.name + " to " + randomCard.name + NL);
+            Log("Changing " + targetCard.name + " to " + randomCard.name);
             CopyCard(randomCard, targetCard);
         }
         else if (myDrawMethod == DrawMethod.CreateNewCardAtTarget)
         {
-            //print("Created " + randomCard.name + " at " + targetCard.transform.position + NL);
+            Log("Created " + randomCard.name + " at " + targetCard.transform.position);
             GameObject newCard = Instantiate(randomCard, targetCard.transform.position, new Quaternion());
 
             //Set sorting layer so newest drawn card is topmost
@@ -176,6 +154,20 @@ public class DeckBehavior : MonoBehaviour
             SessionDetails.CurrentCard = newCard;
         }
         SessionDetails.TotalDrawnCards++;
+
+        //Play Sfx
+        SfxPlayer player = GetComponent<SfxPlayer>();
+        if (player != null)
+        {
+            player.SelectNewClip();
+            player.GetComponent<AudioSource>().Play();
+        }
+    }
+
+    private void Log(string message)
+    {
+        if (drawCardVerboseLogging)
+            print(message + NL);
     }
 
     void CopyCard(GameObject sourceGameObject, GameObject targetGameObject)

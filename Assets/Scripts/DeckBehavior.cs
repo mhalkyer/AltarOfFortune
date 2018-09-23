@@ -67,7 +67,7 @@ public class DeckBehavior : MonoBehaviour
 
                 if (targetCard && targetCard != LastFrame)
                 {
-                    DrawCard(targetCard);
+                    DrawCard(targetCard, nextFrameIndex, SessionDetails.Row);
                     SendMessageUpwards("CheckTheRules");
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
@@ -122,7 +122,7 @@ public class DeckBehavior : MonoBehaviour
     }
 
     bool drawCardVerboseLogging = false;
-    private void DrawCard(GameObject targetCard)
+    private void DrawCard(GameObject targetCard, int NewCardIndex, int NewCardRow)
     {
         //Select a random card from those in the collection
         System.Random randomInt = new System.Random();
@@ -135,7 +135,7 @@ public class DeckBehavior : MonoBehaviour
         if (myDrawMethod == DrawMethod.replaceTargetSprite)
         {
             Log("Changing " + targetCard.name + " to " + randomCard.name);
-            CopyCard(randomCard, targetCard);
+            CopyCardSprite(randomCard, targetCard);
         }
         else if (myDrawMethod == DrawMethod.CreateNewCardAtTarget)
         {
@@ -146,9 +146,12 @@ public class DeckBehavior : MonoBehaviour
             newCard.GetComponent<SpriteRenderer>().sortingOrder = SessionDetails.CurrentCardLayer;
             SessionDetails.CurrentCardLayer++;
 
-            //Disable the "dragToMove" script
-            if(newCard.GetComponent<DragToMove>())
-                newCard.GetComponent<DragToMove>().enabled = false;
+            //Disable the "dragToMove"
+            newCard.GetComponent<CardBehavior>().ClickToDrag = false;
+
+            //Set the new card's row and index
+            newCard.GetComponent<CardBehavior>().Row   = NewCardRow;
+            newCard.GetComponent<CardBehavior>().Index = NewCardIndex;
 
             //Update current card
             SessionDetails.CurrentCard = newCard;
@@ -170,14 +173,14 @@ public class DeckBehavior : MonoBehaviour
             print(message + NL);
     }
 
-    void CopyCard(GameObject sourceGameObject, GameObject targetGameObject)
+    void CopyCardSprite(GameObject fromGameObject, GameObject toGameObject)
     {
         //Copy the game object's name
-        targetGameObject.name = sourceGameObject.name;
+        toGameObject.name = fromGameObject.name;
 
         //Copy the game object's sprite (property of the Sprite Renderer)
-        SpriteRenderer sourceSprite = sourceGameObject.GetComponent<SpriteRenderer>();
-        SpriteRenderer targetSprite = targetGameObject.GetComponent<SpriteRenderer>();
+        SpriteRenderer sourceSprite = fromGameObject.GetComponent<SpriteRenderer>();
+        SpriteRenderer targetSprite = toGameObject.GetComponent<SpriteRenderer>();
 
         if (sourceSprite != null && targetSprite != null)
             targetSprite.sprite = sourceSprite.sprite;

@@ -18,9 +18,12 @@ public class SessionDetails : MonoBehaviour
     public GameObject deathAxeEffect;
     public static GameObject CurrentCard;
 
-    public Text rowText = null,
-                scoreText = null,
-                bannerText = null;
+    public Text rowText          = null,
+                rowTextShadow    = null,
+                scoreText        = null,
+                scoreTextShadow  = null,
+                bannerText       = null,
+                bannerTextShadow = null;
 
     private readonly string rowTextPrefix    = "Row: ",
                             scoreTextPrefix  = "Score: ",
@@ -55,37 +58,34 @@ public class SessionDetails : MonoBehaviour
     {
         //Update the row based on the next draw target
         int nextIndex = Deck.nextFrameIndex;
-                        
-        if      ( nextIndex <= 1  ) { Row = 1; }  //Zero *shouldn't* happen
-        else if ( nextIndex <= 3  ) { Row = 2; }
-        else if ( nextIndex <= 6  ) { Row = 3; }
-        else if ( nextIndex <= 10 ) { Row = 4; }
-        else if ( nextIndex <= 15 ) { Row = 5; }
-        else                        { Row = 1; }  //This also *shouldn't* happen
+
+        if (nextIndex <= 0) { Row = 1; }
+        else if (nextIndex <= 3) { Row = 2; }
+        else if (nextIndex <= 6) { Row = 3; }
+        else if (nextIndex <= 10) { Row = 4; }
+        else if (nextIndex <= 15) { Row = 5; }
+        else { Row = 1; }                           //This *shouldn't* happen
 
         //Move the camera based on the row
-        Camera[] cameras = new Camera[1];
-        Camera.GetAllCameras(cameras);
-        Camera cam = cameras[0];
+        Camera cam = getMainCamera();
         float x = cam.transform.position.x;
         float z = cam.transform.position.z;
 
         switch (Row)
         {
-            case 1:  newCameraY = 6.41f;  break;
-            case 2:  newCameraY = 6.41f;  break;
-            case 3:  newCameraY = 1.6f;   break;
-            case 4:  newCameraY = -6.17f; break;
-            case 5:  newCameraY = -9.11f; break;
-            default: newCameraY = 6.41f;  break;
+            case 1: newCameraY = 6.41f; break;
+            case 2: newCameraY = 6.41f; break;
+            case 3: newCameraY = 1.6f; break;
+            case 4: newCameraY = -6.17f; break;
+            case 5: newCameraY = -9.11f; break;
+            default: newCameraY = 6.41f; break;
         }
 
         //Move the camera towards the new Y position
-        Vector3 newPos = new Vector3(x, newCameraY, z);
-
         //Check if camera's Y position is within 1 'step' of the target Y position
         //if not move another step towards the target Y
-        if ( cameraPosStep <= Mathf.Abs(cam.transform.position.y - newPos.y) )
+        Vector3 newPos = new Vector3(x, newCameraY, z);
+        if (cameraPosStep <= Mathf.Abs(cam.transform.position.y - newPos.y))
         {
             float moveY = cam.transform.position.y < newCameraY ? cameraPosStep : -cameraPosStep;
             cam.transform.position = new Vector3(cam.transform.position.x,
@@ -94,16 +94,36 @@ public class SessionDetails : MonoBehaviour
         }
 
         //Update row text
-        if (rowText.text != rowTextPrefix + Row)
-            rowText.text  = rowTextPrefix + Row;
+        string newText = rowTextPrefix + Row;
+        if (rowText.text != newText)
+        {
+            rowText.text = newText;
+            rowTextShadow.text = newText;
+        }
 
         //Update score text
-        if (scoreText.text != scoreTextPrefix + Score)
-            scoreText.text  = scoreTextPrefix + Score;
+        newText = scoreTextPrefix + Score;
+        if (scoreText.text != newText)
+        {
+            scoreText.text = newText;
+            scoreTextShadow.text = newText;
+        }
 
         //Update banner text
-        if (bannerText.text != bannerTextPrefix + Deck.nextFrameIndex)
-            bannerText.text  = bannerTextPrefix + Deck.nextFrameIndex;
+        newText = bannerTextPrefix + Deck.nextFrameIndex;
+        if (bannerText.text != newText)
+        {
+            bannerText.text = newText;
+            bannerTextShadow.text = newText;
+        }
+    }
+
+    private static Camera getMainCamera()
+    {
+        Camera[] cameras = new Camera[1];
+        Camera.GetAllCameras(cameras);
+        Camera cam = cameras[0];
+        return cam;
     }
 
     // Check the state of all cards and trigger any needed events
@@ -119,7 +139,10 @@ public class SessionDetails : MonoBehaviour
 
             GameObject newDeathAxeEffect = Instantiate(deathAxeEffect, newPos, new Quaternion());
 
-            //Move death axe *parent* to target card
+            //Assign the main camera to the death axe (for shake)
+            newDeathAxeEffect.GetComponentInChildren<DeathAxeActions>().mainCamera = getMainCamera();
+
+            //Move death axe to target card
             newDeathAxeEffect.transform.position = newPos;
 
             //Animate death axe!

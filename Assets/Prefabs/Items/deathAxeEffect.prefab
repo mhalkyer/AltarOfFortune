@@ -227,6 +227,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   WhooshSfx: {fileID: 8300000, guid: 66a58954adc29a44a9e49ce6e7ae5327, type: 3}
   GruntSfx: {fileID: 8300000, guid: 3df25270357debf418f29a0986c7253b, type: 3}
+  mainCamera: {fileID: 0}
+  shakeBounces: 3
+  shakeZRotMin: -2.5
+  shakeZRotMax: 2.5
 --- !u!212 &212257483749770536
 SpriteRenderer:
   m_ObjectHideFlags: 1

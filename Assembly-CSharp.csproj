@@ -64,6 +64,7 @@
     <Compile Include="Assets\Scripts\CardBehavior.cs" />
     <Compile Include="Assets\Scripts\DeathAxeActions.cs" />
     <Compile Include="Assets\Scripts\DeckBehavior.cs" />
+    <Compile Include="Assets\Scripts\EnvelopeBehavior.cs" />
     <Compile Include="Assets\Scripts\LevelUtilities.cs" />
     <Compile Include="Assets\Scripts\SessionDetails.cs" />
     <Compile Include="Assets\Scripts\SfxPlayer.cs" />

@@ -67,20 +67,19 @@ public class DeckBehavior : MonoBehaviour
 
                 if (targetCard && targetCard != LastFrame)
                 {
-                    DrawCard(targetCard, nextFrameIndex, SessionDetails.Row);
-                    SendMessageUpwards("CheckTheRules");
+                    SessionDetails session = GetComponent<SessionDetails>();
+                    DrawCard(targetCard, nextFrameIndex, session.CurrentRow);
+                    SendMessage("CheckTheRules");
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
                 {
-                    ResetAndReshuffle();
+                    ResetAndReshuffle(true);
                 }
 
                 timeOfLastAction = DateTime.Now;
 
-                if (nextFrameIndex + 1 > targetsToDrawCardOn.Count - 1)
-                    nextFrameIndex = 0;
-                else
-                    nextFrameIndex++;
+                //Go to the next index or reset it to Zero
+                MoveToNextIndex();
             }
         }
         catch(Exception error)
@@ -97,8 +96,21 @@ public class DeckBehavior : MonoBehaviour
         }
     }
 
-    private void ResetAndReshuffle()
+    private void MoveToNextIndex()
     {
+        if (nextFrameIndex + 1 > targetsToDrawCardOn.Count - 1)
+            nextFrameIndex = 0;
+        else
+            nextFrameIndex++;
+    }
+
+    public void ResetAndReshuffle(bool PlayShuffleSound)
+    {
+        //Reset lives if resetting after Game Over
+        SessionDetails session = GetComponent<SessionDetails>();
+        if (session.Lives <= 0)
+            session.ResetLives();
+
         //Remove all card game objects
         GameObject[] gObjs = FindObjectsOfType<GameObject>();
         foreach(GameObject g in gObjs)
@@ -113,7 +125,7 @@ public class DeckBehavior : MonoBehaviour
         }
         
         //Play shuffle sfx
-        if(ShuffleSoundEffect != null)
+        if(PlayShuffleSound && ShuffleSoundEffect != null)
         {
             AudioSource aSource = gameObject.GetComponent<AudioSource>(); 
             aSource.clip = ShuffleSoundEffect;
@@ -124,9 +136,11 @@ public class DeckBehavior : MonoBehaviour
     bool drawCardVerboseLogging = false;
     private void DrawCard(GameObject targetCard, int NewCardIndex, int NewCardRow)
     {
+        SessionDetails session = GetComponent<SessionDetails>();
+        
         //Select a random card from those in the collection
         System.Random randomInt = new System.Random();
-        int randomIndex = randomInt.Next(collectionToDrawFrom.Count - 1);
+        int randomIndex = randomInt.Next(collectionToDrawFrom.Count);
         GameObject randomCard = collectionToDrawFrom[randomIndex];
 
         Log("Random index: " + randomIndex + NL + "Random card: " + randomCard.name);
@@ -143,20 +157,23 @@ public class DeckBehavior : MonoBehaviour
             GameObject newCard = Instantiate(randomCard, targetCard.transform.position, new Quaternion());
 
             //Set sorting layer so newest drawn card is topmost
-            newCard.GetComponent<SpriteRenderer>().sortingOrder = SessionDetails.CurrentCardLayer;
-            SessionDetails.CurrentCardLayer++;
+            newCard.GetComponent<SpriteRenderer>().sortingOrder = session.CurrentCardLayer;
+            session.CurrentCardLayer++;
 
             //Disable the "dragToMove"
-            newCard.GetComponent<CardBehavior>().ClickToDrag = false;
-
-            //Set the new card's row and index
-            newCard.GetComponent<CardBehavior>().Row   = NewCardRow;
-            newCard.GetComponent<CardBehavior>().Index = NewCardIndex;
+            CardBehavior newCardBehavior = newCard.GetComponent<CardBehavior>();
+            newCardBehavior.ClickToDrag = false;
+            newCardBehavior.Row   = NewCardRow;
+            newCardBehavior.Index = NewCardIndex;
 
             //Update current card
-            SessionDetails.CurrentCard = newCard;
+            session.CurrentCard = newCard;
         }
-        SessionDetails.TotalDrawnCards++;
+        session.TotalDrawnCards++;
+
+        //Update banner 
+        session.bannerText.color = Color.white;
+        session.updateBanner("Next index: " + nextFrameIndex);
 
         //Play Sfx
         SfxPlayer player = GetComponent<SfxPlayer>();
@@ -187,5 +204,10 @@ public class DeckBehavior : MonoBehaviour
 
         //Enable the target's renderer (in case it was disabled)
         targetSprite.enabled = true;
+    }
+
+    public void SetNextCardClickToShuffle()
+    {
+        nextFrameIndex = targetsToDrawCardOn.Count - 1;
     }
 }

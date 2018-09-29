@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class DeathAxeActions : MonoBehaviour {
 
@@ -86,6 +87,11 @@ public class DeathAxeActions : MonoBehaviour {
         //Shake Camera
         currectShakeBounces = 0;
         //shakeCamera = true;
+
+        //Take Damage
+        GameObject sessionObj = FindObjectsOfType<GameObject>().Where(g => g.GetComponent<SessionDetails>() != null).FirstOrDefault();
+        SessionDetails session = sessionObj.GetComponent<SessionDetails>();
+        session.TakeDamage(1);
     }
 
     public void Hide()

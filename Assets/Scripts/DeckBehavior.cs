@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class DeckBehavior : MonoBehaviour
 {
+    public SessionDetails session;
+
     public List<GameObject> targetsToDrawCardOn = new List<GameObject>();
     public int nextFrameIndex = 0;
 
@@ -67,9 +69,8 @@ public class DeckBehavior : MonoBehaviour
 
                 if (targetCard && targetCard != LastFrame)
                 {
-                    SessionDetails session = GetComponent<SessionDetails>();
                     DrawCard(targetCard, nextFrameIndex, session.CurrentRow);
-                    SendMessage("CheckTheRules");
+                    session.CheckTheRules();
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
                 {
@@ -107,7 +108,6 @@ public class DeckBehavior : MonoBehaviour
     public void ResetAndReshuffle(bool PlayShuffleSound)
     {
         //Reset lives if resetting after Game Over
-        SessionDetails session = GetComponent<SessionDetails>();
         if (session.Lives <= 0)
             session.ResetLives();
 
@@ -136,8 +136,6 @@ public class DeckBehavior : MonoBehaviour
     bool drawCardVerboseLogging = false;
     private void DrawCard(GameObject targetCard, int NewCardIndex, int NewCardRow)
     {
-        SessionDetails session = GetComponent<SessionDetails>();
-        
         //Select a random card from those in the collection
         System.Random randomInt = new System.Random();
         int randomIndex = randomInt.Next(collectionToDrawFrom.Count);
@@ -173,7 +171,7 @@ public class DeckBehavior : MonoBehaviour
 
         //Update banner 
         session.bannerText.color = Color.white;
-        session.updateBanner("Next index: " + nextFrameIndex);
+        session.UpdateBanner("Next index: " + nextFrameIndex);
 
         //Play Sfx
         SfxPlayer player = GetComponent<SfxPlayer>();

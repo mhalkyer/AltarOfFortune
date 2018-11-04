@@ -11,6 +11,8 @@ public class SessionDetails : MonoBehaviour
                CurrentCardLayer = 0,
                TotalDrawnCards = 0;
 
+    public DeckBehavior Deck;
+
     public enum GameMode { DefaultTowerRules, KilledByRoyalty }
 
     public GameMode myGameMode = GameMode.DefaultTowerRules;
@@ -20,7 +22,7 @@ public class SessionDetails : MonoBehaviour
 
     public List<GameObject> Hearts = new List<GameObject>() { };
 
-    public GameObject particleObject,
+    public GameObject pointsEffect,
                       deathAxeEffect,
                       CurrentCard;
 
@@ -57,15 +59,13 @@ public class SessionDetails : MonoBehaviour
         if (bannerText == null)
             print("UI bannerText has no text to set!" + NL);
 
-        if (particleObject == null)
+        if (pointsEffect == null)
             print("No particle effect defined!" + NL);
     }
 	
 	// Update is called once per frame
 	void Update ()
     {
-        DeckBehavior Deck = GetComponent<DeckBehavior>();
-
         //Update the row based on the next draw target
         int nextIndex = Deck.nextFrameIndex;
 
@@ -244,9 +244,8 @@ public class SessionDetails : MonoBehaviour
 
     private void GameOver()
     {
-        updateBanner("GAME OVER!");
+        UpdateBanner("GAME OVER!");
         
-        DeckBehavior Deck = GetComponent<DeckBehavior>();
         Deck.SetNextCardClickToShuffle();
 
         Score = 0;
@@ -281,14 +280,18 @@ public class SessionDetails : MonoBehaviour
     private void PlayParticleEffect(GameObject targetCard)
     {
         //Create and play particle effect
-        GameObject goldCoinParticleEffect = Instantiate(particleObject, targetCard.transform.position, new Quaternion());
-        goldCoinParticleEffect.GetComponent<ParticleSystem>().Play();
+        GameObject effect = Instantiate(pointsEffect, 
+                                        targetCard.transform.position, 
+                                        pointsEffect.transform.rotation);
+
+        ParticleSystem particles = effect.GetComponent<ParticleSystem>();
+        particles.Play();
 
         //Destroy the effect after it finishes playing
-        Destroy(goldCoinParticleEffect, goldCoinParticleEffect.GetComponent<ParticleSystem>().main.duration);
+        Destroy(effect, particles.main.startLifetime.constant);
     }
 
-    public void updateBanner(string newText)
+    public void UpdateBanner(string newText)
     {
         banner = newText;
     }

@@ -10,7 +10,16 @@ public class TowerRules
 
     static TowerRules()
     {
-        DefaultCardRelationships.Add(0,  new CardRelation(new List<int>() {    }));
+        // Pyramid Formation Index Key
+        //----------------------------
+        //             0
+        //            1 2
+        //          3  4  5
+        //        6  7  8  9                       
+        //      10 11 12 13 14
+        //----------------------------
+
+        DefaultCardRelationships.Add(0,  new CardRelation(new List<int>() {    })); //First Card, Topmost
         DefaultCardRelationships.Add(1,  new CardRelation(new List<int>() {0   }));
         DefaultCardRelationships.Add(2,  new CardRelation(new List<int>() {0   }));
         DefaultCardRelationships.Add(3,  new CardRelation(new List<int>() {1   }));
@@ -24,7 +33,7 @@ public class TowerRules
         DefaultCardRelationships.Add(11, new CardRelation(new List<int>() {6, 7}));
         DefaultCardRelationships.Add(12, new CardRelation(new List<int>() {7, 8}));
         DefaultCardRelationships.Add(13, new CardRelation(new List<int>() {8, 9}));
-        DefaultCardRelationships.Add(14, new CardRelation(new List<int>() {9   }));
+        DefaultCardRelationships.Add(14, new CardRelation(new List<int>() {9   })); //Last Card
     }
 
     public static List<int> getAdjacentIndexes(int IndexToLookup)

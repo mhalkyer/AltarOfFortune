@@ -70,7 +70,7 @@ public class DeckBehavior : MonoBehaviour
                 if (targetCard && targetCard != LastFrame)
                 {
                     DrawCard(targetCard, nextFrameIndex, session.CurrentRow);
-                    session.CheckTheRules();
+                    session.TriggerRulesCheck();
                 }
                 else if (targetCard == LastFrame && ResetOnLastFrame)
                 {
@@ -167,12 +167,9 @@ public class DeckBehavior : MonoBehaviour
             //Update current card
             session.CurrentCard = newCard;
         }
+
         session.TotalDrawnCards++;
-
-        //Update banner 
-        session.bannerText.color = Color.white;
-        session.UpdateBanner("Next index: " + nextFrameIndex);
-
+        
         //Play Sfx
         SfxPlayer player = GetComponent<SfxPlayer>();
         if (player != null)

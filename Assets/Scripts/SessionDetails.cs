@@ -2,14 +2,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Linq;
+using System;
 
 public class SessionDetails : MonoBehaviour
 {
     public int CurrentRow = 1,
-               Score = 0,
+               TempScore = 0,
+               BankedScore = 0,
                Lives = 3,
                CurrentCardLayer = 0,
                TotalDrawnCards = 0;
+
+    public bool CheckRulesNextUpdate = false;
 
     public DeckBehavior Deck;
 
@@ -25,58 +29,111 @@ public class SessionDetails : MonoBehaviour
     public GameObject pointsEffect,
                       deathAxeEffect,
                       CurrentCard;
+                     
+    public EnvelopeBehavior Envelope;
 
-    public Text rowText          = null,
-                rowTextShadow    = null,
-                scoreText        = null,
-                scoreTextShadow  = null,
-                bannerText       = null,
-                bannerTextShadow = null;
-
-    private readonly string rowTextPrefix    = "Row: ",
-                            scoreTextPrefix  = "Score: ",
-                            NL               = "\r\n";
+    public Text TopRightText          = null,
+                TopRightTextShadow    = null,
+                BottomRightText       = null,
+                BottomRightTextShadow = null,
+                TopLeftText           = null,
+                TopLeftTextShadow     = null;
 
     private string banner = string.Empty;
+    private readonly string NL = "\r\n";
 
     public bool LockCameraToActiveRow = true;
 
     private float newCameraY = 6.41f,
                   cameraPosStep = 0.2f;
 
-    // Use this for initialization
     void Start ()
     {
         if (Hearts.Count == 0)
             print("SessionDetails has no hearts game objs set!" + NL);
 
-        if (rowText == null)
+        if (TopRightText == null)
             print("UI rowText has no text to set!" + NL);
 
-        if (scoreText == null)
+        if (BottomRightText == null)
             print("UI scoreText has no text to set!" + NL);
 
-        if (bannerText == null)
+        if (TopLeftText == null)
             print("UI bannerText has no text to set!" + NL);
 
         if (pointsEffect == null)
             print("No particle effect defined!" + NL);
+
+        if (Envelope == null)
+            print("No Envelope defined!" + NL);
     }
 	
-	// Update is called once per frame
 	void Update ()
     {
+        //Check lives for endgame
+        if (Lives <= 0)
+            GameOver();
+
         //Update the row based on the next draw target
         int nextIndex = Deck.nextFrameIndex;
 
-        if      (nextIndex <= 0)  { CurrentRow = 1; }
-        else if (nextIndex <= 3)  { CurrentRow = 2; }
-        else if (nextIndex <= 6)  { CurrentRow = 3; }
+        if (nextIndex <= 0) { CurrentRow = 1; }
+        else if (nextIndex <= 3) { CurrentRow = 2; }
+        else if (nextIndex <= 6) { CurrentRow = 3; }
         else if (nextIndex <= 10) { CurrentRow = 4; }
         else if (nextIndex <= 15) { CurrentRow = 5; }
-        else                      { CurrentRow = 1; }                           //This *shouldn't* happen
+        else { CurrentRow = 1; }       //This *shouldn't* happen
 
-        //Move the camera based on the row
+        MoveCameraToCurrentRow();
+        UpdateTopLeftText();
+        UpdateTopRightText();
+        UpdateBottomRightText();
+
+        //Check if condition is met to show the envelope
+        if (TempScore > 500 && Envelope.VisibleInTheScene == false)
+            Envelope.EnterScene();
+
+        if (CheckRulesNextUpdate)
+            CheckTheRules();
+    }
+
+    private void UpdateTopLeftText()
+    {
+        if (banner != string.Empty && TopLeftText.text != banner)
+        {
+            TopLeftText.text = banner;
+            TopLeftTextShadow.text = banner;
+        }
+    }
+
+    private void UpdateTopRightText()
+    {
+        const string rowTextPrefix = "Row: ";
+        string OnscreenRowText = rowTextPrefix + CurrentRow;
+        if (TopRightText.text != OnscreenRowText)
+        {
+            TopRightText.text = OnscreenRowText;
+            TopRightTextShadow.text = OnscreenRowText;
+        }
+    }
+
+    private void UpdateBottomRightText()
+    {
+        const string tempTextPrefix = "Score: ";
+        const string bankTextPrefix = "Bank: ";
+
+        var OnscreenScoreText = tempTextPrefix + String.Format("{0:D5}", TempScore) + NL +
+                                bankTextPrefix + String.Format("{0:D5}", BankedScore);
+
+        if (BottomRightText.text != OnscreenScoreText)
+        {
+            BottomRightText.text       = OnscreenScoreText;
+            BottomRightTextShadow.text = OnscreenScoreText;
+        }
+    }
+
+    private void MoveCameraToCurrentRow()
+    {
         Camera cam = getMainCamera();
         float x = cam.transform.position.x;
         float z = cam.transform.position.z;
@@ -102,36 +159,6 @@ public class SessionDetails : MonoBehaviour
                                                  cam.transform.position.y + moveY,
                                                  cam.transform.position.z);
         }
-
-        //Update row text
-        string newText = rowTextPrefix + CurrentRow;
-        if (rowText.text != newText)
-        {
-            rowText.text = newText;
-            rowTextShadow.text = newText;
-        }
-
-        //Update score text
-        newText = scoreTextPrefix + Score;
-        if (scoreText.text != newText)
-        {
-            scoreText.text = newText;
-            scoreTextShadow.text = newText;
-        }
-
-        //Update banner text
-        if (banner != string.Empty && bannerText.text != banner)
-        {
-            bannerText.text = banner;
-            bannerTextShadow.text = banner;
-        }      
-
-        //Check lives for endgame
-        if (Lives <= 0)
-        {
-            GameOver();
-            bannerText.color = Color.red;
-        }
     }
 
     private static Camera getMainCamera()
@@ -142,9 +169,18 @@ public class SessionDetails : MonoBehaviour
         return cam;
     }
 
-    // Check the state of all cards and trigger any needed events
-    public void CheckTheRules()
+    public void TriggerRulesCheck()
     {
+        CheckRulesNextUpdate = true;
+    }
+
+    /// <summary>
+    /// Check the state of all cards and trigger any needed events
+    /// </summary>
+    private void CheckTheRules()
+    {
+        CheckRulesNextUpdate = false;
+
         switch(myGameMode)
         {
             case GameMode.DefaultTowerRules:
@@ -166,7 +202,6 @@ public class SessionDetails : MonoBehaviour
 
                     if (adjCard != null)
                         adjacentCards.Add(adjCard);
-
                 }
 
                 //Check if the adjacent cards match the current card
@@ -175,22 +210,20 @@ public class SessionDetails : MonoBehaviour
                 {
                     SpawnAnimatedWeaponOnTarget(CurrentCard);
 
-                    if (Score < 300)
-                        Score = 0;
+                    if (TempScore < 300)
+                        TempScore = 0;
                     else
-                        Score -= 300;
+                        TempScore -= 300;
                 }
 
                 //If there's no matching cards, play coin effect and add points
                 if (matchingCards.Count == 0)
                 {
-                    Score += 150;
+                    TempScore += 150;
                     PlayParticleEffect(CurrentCard);
                 }
 
                 break;
-
-
 
             case GameMode.KilledByRoyalty:
 
@@ -202,21 +235,26 @@ public class SessionDetails : MonoBehaviour
 
                     //Subtract from score
                     int axeScoreDamage = 300;
-                    if (Score >= axeScoreDamage)
-                        Score -= axeScoreDamage;
+                    if (TempScore >= axeScoreDamage)
+                        TempScore -= axeScoreDamage;
                     else
-                        Score = 0;
+                        TempScore = 0;
                 }
                 else
                 {
-                    Score += 100;
+                    TempScore += 100;
                     PlayParticleEffect(CurrentCard);
                 }
                 break;
 
-
         }
         return;
+    }
+
+    public void BankScore()
+    {
+        BankedScore += TempScore;
+        TempScore = 0;
     }
 
     public void TakeDamage(int damage)
@@ -244,11 +282,11 @@ public class SessionDetails : MonoBehaviour
 
     private void GameOver()
     {
+        TempScore = 0;
+        TopLeftText.color = Color.red;
         UpdateBanner("GAME OVER!");
         
         Deck.SetNextCardClickToShuffle();
-
-        Score = 0;
     }
 
     public void ResetLives()

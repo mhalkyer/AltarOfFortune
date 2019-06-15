@@ -5,12 +5,16 @@ using System.Collections.Generic;
 
 public class LevelUtilities : MonoBehaviour
 {
-    public void loadLevel(string sceneName)
+    public LevelUtilities()
+    {
+    }
+
+    public void LoadLevel(string sceneName)
     {
         SceneManager.LoadScene(sceneName);
     }
 
-    public void moveCameraToCanvas(Canvas newCanvasToView)
+    public void MoveCameraToCanvas(Canvas newCanvasToView)
     {
         Camera.main.transform.position = new Vector3(newCanvasToView.transform.position.x, 
                                                      newCanvasToView.transform.position.y,
@@ -18,15 +22,13 @@ public class LevelUtilities : MonoBehaviour
                                                      );
     }
 
-    // Use this for initialization
-    //void Start()
-    //{
+    void Start()
+    {
 
-    //}
+    }
 
-    // Update is called once per frame
-    //void Update()
-    //{
+    void Update()
+    {
 
-    //}
+    }
 }

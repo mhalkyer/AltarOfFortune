@@ -24,7 +24,7 @@ public class SfxPlayer : MonoBehaviour {
     /// <summary>
     /// Selects a new clip to play next
     /// </summary>
-    public void SelectNewClip ()
+    public void SelectNewClip()
     {
 		if(SfxPlayStyle == PlayStyle.Random)
         {
@@ -41,5 +41,11 @@ public class SfxPlayer : MonoBehaviour {
 
         AudioSource myAudioSource = GetComponent<AudioSource>();
         myAudioSource.clip = EffectsToPickFrom[currentIndex];
+    }
+
+    public void Play()
+    {
+        AudioSource myAudioSource = GetComponent<AudioSource>();
+        myAudioSource.Play();
     }
 }

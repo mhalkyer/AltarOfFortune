@@ -4,29 +4,45 @@ using System.Collections.Generic;
 
 public class CardBehavior : MonoBehaviour
 {
-    private const string GRABtag = "beingGrabbed";
-    private const string FREEtag = "Untagged";
-    private bool beingClicked = false;
-    private Vector3 screenPoint, offset;
-    private float scalingStep = 0.05f;
-    private int topOfCards = 1;
-    private List<GameObject> adjacentCards = new List<GameObject>();
+    //--------------------------------------------------------------------------------------//
+    // PUBLIC FIELDS         ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
 
-    public int Row = -1;
-    public int Index = -1;
-    public bool ScaleOnClick = true;
-    public bool ClickToDrag = false;
-    public bool untagOnClick = true;
-    public bool bringObjToFront = true;            //Done by changing the sprite renderer's sorting order
-    public bool gridlikeMovement = false;
-    public float gridMoveFactor = 0.3175f;
-    public Vector3 scaleToIncreaseOnClick = new Vector3(1.25f, 1.25f, 1.25f);
+    public int      Row = -1;
+    public int      Index = -1;
+    public bool     ScaleOnClick = true;
+    public bool     ClickToDrag = false;
+    public bool     untagOnClick = true;
+    public bool     bringObjToFront = true;     //Done by changing the renderer's sorting order
+    public bool     gridlikeMovement = false;
+    public float    gridMoveFactor = 0.3175f;
+    public Vector3  scaleToIncreaseOnClick = new Vector3(1.25f, 1.25f, 1.25f);
 
-    // Use this for initialization
-    void Start ()
+    //--------------------------------------------------------------------------------------//
+    // PRIVATE FIELDS         --------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
+
+    private const string        GRABtag = "beingGrabbed";
+    private const string        FREEtag = "Untagged";
+    private bool                beingClicked = false;
+    private Vector3             screenPoint, offset;
+    private float               scalingStep = 0.05f;
+    private int                 topOfCards = 1;
+
+    //--------------------------------------------------------------------------------------//
+    // PUBLIC FUNCTIONS      ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
+
+
+
+    //--------------------------------------------------------------------------------------//
+    // PRIVATE FUNCTIONS     ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
+
+    private void Start ()
     { }
 
-    void Update()
+    private void Update()
     {
         if (ScaleOnClick)
         {
@@ -47,8 +63,8 @@ public class CardBehavior : MonoBehaviour
             }
         }
     }
-    
-    void OnMouseDown()
+
+    private void OnMouseDown()
     {
         beingClicked = true;
 
@@ -82,7 +98,7 @@ public class CardBehavior : MonoBehaviour
         }
     }
 
-    void OnMouseDrag()
+    private void OnMouseDrag()
     {
         if (ClickToDrag)
         {
@@ -101,59 +117,9 @@ public class CardBehavior : MonoBehaviour
         }
     }
 
-    void OnMouseUp()
+    private void OnMouseUp()
     {
         beingClicked = false;
     }
 
-    #region My old dumb way  ¯\_(ツ)_/¯
-    //public float xOffset = 0.0f;
-    //public float yOffset = 0.0f;
-    //private bool beingClicked = false;
-    // Update is called once per frame
-    //void Update ()
-    //   {
-    //       Vector3 mousePos = Input.mousePosition;
-
-    //       //Check if left-mouse button is clicked
-    //       if (!beingClicked && Input.GetMouseButtonDown(0))
-    //       {
-    //           //Create ray from camera through mouse position
-    //           RaycastHit hit;
-    //           Ray ray = Camera.main.ScreenPointToRay(mousePos);
-
-    //           if (Physics.Raycast(ray, out hit))
-    //           {
-    //               //Test if hit object is the gameobject's name
-    //               if (hit.transform.name == gameObject.name)
-    //               {
-    //                   //print("My gameObject is clicked by mouse");
-    //                   beingClicked = true;
-    //               }
-    //           }
-    //       }
-
-    //       //Check if left-mouse button is NOT clicked
-    //       if (Input.GetMouseButtonUp(0))
-    //       {
-    //           beingClicked = false;
-    //       }
-
-    //       if (beingClicked)
-    //           moveToMousePosition(mousePos);
-    //   }
-
-    //private void moveToMousePosition(Vector3 mousePos)
-    //{
-    //    //Convert the Screen Point mouse coordinates to World Point coordinates
-    //    Vector2 localPosition = Camera.main.ScreenToWorldPoint(mousePos);
-
-    //    //Move gameobject to the mouse coordinates
-    //    float newX = localPosition.x,
-    //          newY = localPosition.y;
-
-    //    print(string.Format("Move {0} to ({1:F2},{2:F2})", gameObject.name, newX, newY));
-    //    gameObject.transform.position = new Vector2(newX, newY);
-    //}
-    #endregion
 }

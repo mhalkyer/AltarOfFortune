@@ -6,48 +6,105 @@ using System;
 
 public class SessionDetails : MonoBehaviour
 {
-    public int CurrentRow = 1,
-               TempScore = 0,
-               BankedScore = 0,
-               Lives = 3,
-               CurrentCardLayer = 0,
-               TotalDrawnCards = 0;
+    //--------------------------------------------------------------------------------------//
+    // PUBLIC FIELDS         ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
 
-    public bool CheckRulesNextUpdate = false;
-
-    public DeckBehavior Deck;
-
-    public enum GameMode { DefaultTowerRules, KilledByRoyalty }
-
-    public GameMode myGameMode = GameMode.DefaultTowerRules;
-
-    public Sprite fullHeartSprite,
-                  emptyHeartSprite;
-
+    public int              CurrentRow = 1;
+    public int              TempScore = 0;
+    public int              BankedScore = 0;
+    public int              Lives = 3;
+    public int              CurrentCardLayer = 0;
+    public int              TotalDrawnCards = 0;
+    public bool             CheckRulesNextUpdate = false;
+    public DeckBehavior     Deck;
+    public enum GameMode    { DefaultTowerRules, KilledByRoyalty }
+    public GameMode         myGameMode = GameMode.DefaultTowerRules;
+    public Sprite           fullHeartSprite;
+    public Sprite           emptyHeartSprite;
     public List<GameObject> Hearts = new List<GameObject>() { };
-
-    public GameObject pointsEffect,
-                      deathAxeEffect,
-                      CurrentCard;
-                     
+    public GameObject       pointsEffect;
+    public GameObject       deathAxeEffect;
+    public GameObject       EndGamePanel;
     public EnvelopeBehavior Envelope;
+    public Text             TopRightText          = null;
+    public Text             TopRightTextShadow    = null;
+    public Text             BottomRightText       = null;
+    public Text             BottomRightTextShadow = null;
+    public Text             TopLeftText           = null;
+    public Text             TopLeftTextShadow     = null;
+    public GameObject       CurrentCard { get; set; }
+    public bool             LockCameraToActiveRow = true;
+    public SfxPlayer        CoinSoundEffectPlayer = null;
 
-    public Text TopRightText          = null,
-                TopRightTextShadow    = null,
-                BottomRightText       = null,
-                BottomRightTextShadow = null,
-                TopLeftText           = null,
-                TopLeftTextShadow     = null;
+    //--------------------------------------------------------------------------------------//
+    // PRIVATE FIELDS        ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
 
-    private string banner = string.Empty;
-    private readonly string NL = "\r\n";
+    private string                  banner { get; set; }
+    private float                   cameraPosStep = 0.2f;
+    private float                   newCameraY = 6.41f;
+    private readonly string         DEFENDER = "Defender";
+    private readonly string         NL = "\r\n";
+    private Dictionary<string, int> PlayerPerks = new Dictionary<string, int>();
 
-    public bool LockCameraToActiveRow = true;
+    //--------------------------------------------------------------------------------------//
+    // PUBLIC FUNCTIONS      ---------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
 
-    private float newCameraY = 6.41f,
-                  cameraPosStep = 0.2f;
+    public void TriggerRulesCheck()
+    {
+        CheckRulesNextUpdate = true;
+    }
 
-    void Start ()
+    public void BankScore()
+    {
+        BankedScore += TempScore;
+        TempScore = 0;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        Lives -= damage;
+
+        switch(Lives)
+        {
+            case 3:
+                break;
+
+            case 2:
+                Hearts[2].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
+                break;
+
+            case 1:
+                Hearts[1].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
+                break;
+
+            case 0:
+                Hearts[0].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
+                break;
+        }
+    }
+
+    public void ResetLives()
+    {
+        Lives = 3;
+
+        foreach (SpriteRenderer renderer in Hearts.Select(e => e.GetComponent<SpriteRenderer>()))
+            renderer.sprite = fullHeartSprite;
+    }
+
+    public void UpdateBanner(string newText, Color newColor)
+    {
+        banner = newText;
+        TopLeftText.color = newColor;
+    }
+
+    //--------------------------------------------------------------------------------------//
+    // PRIVATE FUNCTIONS      --------------------------------------------------------------//
+    //--------------------------------------------------------------------------------------//
+
+    private void Start ()
     {
         if (Hearts.Count == 0)
             print("SessionDetails has no hearts game objs set!" + NL);
@@ -67,8 +124,8 @@ public class SessionDetails : MonoBehaviour
         if (Envelope == null)
             print("No Envelope defined!" + NL);
     }
-	
-	void Update ()
+
+    private void Update ()
     {
         //Check lives for endgame
         if (Lives <= 0)
@@ -99,10 +156,11 @@ public class SessionDetails : MonoBehaviour
 
     private void UpdateTopLeftText()
     {
-        if (banner != string.Empty && TopLeftText.text != banner)
+        if (banner           != string.Empty    && 
+            TopLeftText.text != banner)
         {
-            TopLeftText.text = banner;
-            TopLeftTextShadow.text = banner;
+            TopLeftText.text        = banner;
+            TopLeftTextShadow.text  = banner;
         }
     }
 
@@ -168,12 +226,7 @@ public class SessionDetails : MonoBehaviour
         Camera cam = cameras[0];
         return cam;
     }
-
-    public void TriggerRulesCheck()
-    {
-        CheckRulesNextUpdate = true;
-    }
-
+    
     /// <summary>
     /// Check the state of all cards and trigger any needed events
     /// </summary>
@@ -183,7 +236,7 @@ public class SessionDetails : MonoBehaviour
 
         switch(myGameMode)
         {
-            case GameMode.DefaultTowerRules:
+            case GameMode.DefaultTowerRules:        // Inspired by one of my favorite card games, Fortunes Tower from Fable 2 - <3
 
                 GameObject[] gObjs = FindObjectsOfType<GameObject>();
 
@@ -193,7 +246,37 @@ public class SessionDetails : MonoBehaviour
                               orderby g.GetComponent<CardBehavior>().Index
                               select  g;
 
-                //Build list of adjacent cards from adjacent indexes
+                //-------------------------------------------------------------------------------------------------------------------------//
+                // DA RULES                             -----------------------------------------------------------------------------------//
+                //-------------------------------------------------------------------------------------------------------------------------//
+
+                // ------------------
+                // RULE 1 : DEFENDERS
+                // ------------------
+                
+                // Check for Trigger Card to add Player "Defender" (blocks attacks)            
+                if (CurrentCard.name.ToLower().Contains("king"))
+                {
+                    if (PlayerPerks.ContainsKey(DEFENDER))      //Increment the defender count
+                    {
+                        int newValue = PlayerPerks[DEFENDER];
+                        newValue++;
+                        PlayerPerks[DEFENDER] = newValue;
+                        UpdateBanner("You now have " + PlayerPerks[DEFENDER] + " Defenders!", Color.yellow);
+
+                    }
+                    else
+                    {
+                        PlayerPerks.Add(DEFENDER, 1);           //Set the defender count to one
+                        UpdateBanner("You now have a Defender!", Color.yellow);
+                    }
+                }
+
+                // ---------------------
+                // RULE 2 : NUMBER MATCH
+                // ---------------------
+
+                // Build list of adjacent cards from adjacent indexes
                 List<int> adjacentCardIndexes = TowerRules.getAdjacentIndexes(CurrentCard.GetComponent<CardBehavior>().Index);
                 List<GameObject> adjacentCards = new List<GameObject>();
                 foreach (int i in adjacentCardIndexes)
@@ -204,24 +287,49 @@ public class SessionDetails : MonoBehaviour
                         adjacentCards.Add(adjCard);
                 }
 
-                //Check if the adjacent cards match the current card
-                List<GameObject> matchingCards = adjacentCards.Where(g => g.name == CurrentCard.name).ToList();
-                foreach (GameObject gObj in matchingCards)
-                {
-                    SpawnAnimatedWeaponOnTarget(CurrentCard);
+                // Check if the adjacent card number matches the current card number
+                int CurrentCardNum = GetNumberFromCardName(CurrentCard.name);
 
-                    if (TempScore < 300)
-                        TempScore = 0;
-                    else
-                        TempScore -= 300;
+                List<GameObject> matchingCards = adjacentCards.Where(g => GetNumberFromCardName(g.name) == CurrentCardNum).ToList();
+                bool cardMatch = matchingCards.Any();
+
+                if(cardMatch)
+                {
+                    // If the player has a defender, block the attack
+                    int defenders = 0;
+                    PlayerPerks.TryGetValue(DEFENDER, out defenders);
+                    if (PlayerPerks.ContainsKey(DEFENDER) && defenders > 0)      
+                    {
+                        PlayerPerks[DEFENDER] = defenders - 1;
+                        UpdateBanner("Defender Blocked You!" + NL + 
+                                     PlayerPerks[DEFENDER] + " Defenders left.", Color.white);
+
+                    }
+                    else // Otherwise take damage
+                    {
+                        SpawnAnimatedWeaponOnTarget(CurrentCard);
+                        DecrementScore(300);
+                        UpdateBanner("Ouch!", Color.red);
+                    }
                 }
 
-                //If there's no matching cards, play coin effect and add points
-                if (matchingCards.Count == 0)
+                // ------------------------
+                // RULE 3 : STOLE TREASURE!
+                // ------------------------
+                
+                //If there were no matching cards above, play coin effect and add points
+                if (!cardMatch)
                 {
-                    TempScore += 150;
+                    CoinSoundEffectPlayer.SelectNewClip();
+                    CoinSoundEffectPlayer.Play();
+                    UpdateBanner("You got 150 coins!", Color.yellow);
+                    IncrementScore(150);
                     PlayParticleEffect(CurrentCard);
                 }
+
+                //-------------------------------------------------------------------------------------------------------------------------//
+                // END OF DA RULES <3                   -----------------------------------------------------------------------------------//
+                //-------------------------------------------------------------------------------------------------------------------------//
 
                 break;
 
@@ -235,14 +343,11 @@ public class SessionDetails : MonoBehaviour
 
                     //Subtract from score
                     int axeScoreDamage = 300;
-                    if (TempScore >= axeScoreDamage)
-                        TempScore -= axeScoreDamage;
-                    else
-                        TempScore = 0;
+                    DecrementScore(axeScoreDamage);
                 }
                 else
                 {
-                    TempScore += 100;
+                    IncrementScore(100);
                     PlayParticleEffect(CurrentCard);
                 }
                 break;
@@ -251,68 +356,66 @@ public class SessionDetails : MonoBehaviour
         return;
     }
 
-    public void BankScore()
+    /// <summary>
+    /// Returns the number found in a card name. Returns -1 if nothing is found.
+    /// </summary>
+    /// <param name="cardName">String to inspect for a number inside</param>
+    /// <returns></returns>
+    private int GetNumberFromCardName(string cardName)
     {
-        BankedScore += TempScore;
-        TempScore = 0;
+        int[] numbers = { 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
+        foreach (int num in numbers)
+            if(cardName.Contains(num.ToString()))
+                return num;
+
+        return -1;
     }
 
-    public void TakeDamage(int damage)
+    private void IncrementScore(int amount)
     {
-        Lives -= damage;
+        amount = Math.Abs(amount);  //Make sure the amount is postive
+        TempScore += amount;
+    }
 
-        switch(Lives)
-        {
-            case 3:
-                break;
-
-            case 2:
-                Hearts[2].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
-                break;
-
-            case 1:
-                Hearts[1].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
-                break;
-
-            case 0:
-                Hearts[0].GetComponent<SpriteRenderer>().sprite = emptyHeartSprite;
-                break;
-        }
+    private void DecrementScore(int amount)
+    {
+        amount = Math.Abs(amount);  //Make sure the amount is postive
+        if (TempScore < amount)
+            TempScore = 0;
+        else
+            TempScore -= amount;
     }
 
     private void GameOver()
     {
+        EndGamePanel.SetActive(true);
         TempScore = 0;
-        TopLeftText.color = Color.red;
-        UpdateBanner("GAME OVER!");
+        UpdateBanner("GAME OVER!", Color.red);
         
         Deck.SetNextCardClickToShuffle();
     }
 
-    public void ResetLives()
-    {
-        Lives = 3;
-
-        foreach (SpriteRenderer renderer in Hearts.Select(e => e.GetComponent<SpriteRenderer>()))
-            renderer.sprite = fullHeartSprite;
-    }
-
     private void SpawnAnimatedWeaponOnTarget(GameObject targetObj)
     {
-        Vector3 newPos = new Vector3(targetObj.transform.position.x - 0.7f,  //Animation start is off-screen from target
-                                     targetObj.transform.position.y - 12.0f,
-                                     deathAxeEffect.transform.position.z);
+        float AnimXOffset =  -0.7f;
+        float AnimYOffset = -12.0f;
+
+        Vector3 newPos = new Vector3(targetObj.transform.position.x + AnimXOffset,  // Animation start is off-screen from target
+                                     targetObj.transform.position.y + AnimYOffset,
+                                     deathAxeEffect.transform.position.z);          // Leave Z unchanged
 
         GameObject newDeathAxeEffect = Instantiate(deathAxeEffect, newPos, new Quaternion());
 
-        //Assign the main camera to the death axe (for shake)
+        // Update the main camera of the death axe (for shake effect)
         newDeathAxeEffect.GetComponentInChildren<DeathAxeActions>().mainCamera = getMainCamera();
 
-        //Move death axe to target card
+        // Move death axe to right position to hit target card
         newDeathAxeEffect.transform.position = newPos;
 
-        //Animate death axe!
-        newDeathAxeEffect.GetComponentInChildren<Animator>().Play("axeFlyIn", -1, 0f);     //Using the extra 2 parameters helps it reset (?)
+        // Animate death axe! 
+        // Using the extra 2 parameters helps it reset (?)                       //Layer  //Normalized Time Offset (between 0-1)
+        newDeathAxeEffect.GetComponentInChildren<Animator>().Play("axeFlyIn",   -1,       0f);
     }
 
     private void PlayParticleEffect(GameObject targetCard)
@@ -327,10 +430,5 @@ public class SessionDetails : MonoBehaviour
 
         //Destroy the effect after it finishes playing
         Destroy(effect, particles.main.startLifetime.constant);
-    }
-
-    public void UpdateBanner(string newText)
-    {
-        banner = newText;
     }
 }
